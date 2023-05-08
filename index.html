@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id-ID">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sensor Management System</title>       
+
+    <!--   
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    -->
+    <!-- google font -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet" type="text/css" />
+
+    <link href="http://prasmul.qfactor.id/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">    
+	<style>
+	.switch {
+	  position: relative;
+	  display: inline-block;
+	  width: 60px;
+	  height: 34px;
+	}
+
+	.switch input { 
+	  opacity: 0;
+	  width: 0;
+	  height: 0;
+	}
+
+	.slider {
+	  position: absolute;
+	  cursor: pointer;
+	  top: 0;
+	  left: 0;
+	  right: 0;
+	  bottom: 0;
+	  background-color: #ccc;
+	  -webkit-transition: .4s;
+	  transition: .4s;
+	}
+
+	.slider:before {
+	  position: absolute;
+	  content: "";
+	  height: 26px;
+	  width: 26px;
+	  left: 4px;
+	  bottom: 4px;
+	  background-color: white;
+	  -webkit-transition: .4s;
+	  transition: .4s;
+	}
+
+	input:checked + .slider {
+	  background-color: #2196F3;
+	}
+
+	input:focus + .slider {
+	  box-shadow: 0 0 1px #2196F3;
+	}
+
+	input:checked + .slider:before {
+	  -webkit-transform: translateX(26px);
+	  -ms-transform: translateX(26px);
+	  transform: translateX(26px);
+	}
+
+	/* Rounded sliders */
+	.slider.round {
+	  border-radius: 34px;
+	}
+
+	.slider.round:before {
+	  border-radius: 50%;
+	}
+	</style>    
+</head>
+<body style="overflow-x:hidden;">
+	<div class="wrapper">
+		<div class="col-3" style="margin-bottom:10px;">
+			<div class="card">
+				<div class="panel-heading" style="height: 28px">
+					<h3 class="panel-title"  style="text-align:center;font-size:12px">Switch</h3>
+				</div>
+				<div class="row" >
+					<!-- Rectangular switch -->
+					<div class="col-12">
+						<div style="margin-left:30px;float:left;">
+							<label class="switch">
+							  <input type="checkbox" id="swt" onclick="checkit(this.checked)">
+							  <span class="slider"></span>
+							</label>
+						</div>
+						<div style="float:right;margin-right:20px;margin-top:5px;" id="lmp_status">LAMP <span style="color:green">ON</span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+
+<script>
+const accesskey = "187e5b5ba759adba";
+const accesstoken = "187e5b5ba75a4d8c";
+const APPLICATION_ID = "APP64536115abb9e50384";
+const DEVICE_ID = "DEV64548134ca75744990";
+const wbs = new WebSocket('wss://wss-data.telkomiot.id/'+APPLICATION_ID+'/'+DEVICE_ID);
+wbs.onopen = function() {
+	console.log('WebSocket Client Connected');
+	
+}
+
+wbs.onmessage = function (d) {
+			const m = JSON.parse(JSON.parse(d.data));
+			const lst = parseInt(m.LED);
+			if(lst==0){
+				document.getElementById('swt').checked = false;
+				document.getElementById('lmp_status').innerHTML = 'LAMP <span style="color:red">OFF</span>';
+			}else{
+				document.getElementById('swt').checked = true;
+				document.getElementById('lmp_status').innerHTML = 'LAMP <span style="color:green">ON</span>';
+			}
+        }
+
+
+function checkit(d){
+	//console.log('ok',d);
+	var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
+	xmlhttp.open("POST", "https://publish-data.telkomiot.id/v2.0/pubs/"+APPLICATION_ID+"/"+DEVICE_ID);
+	xmlhttp.setRequestHeader("Authorization", "Basic "+btoa(unescape(encodeURIComponent(accesskey + ':' + accesstoken))));
+	xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+	//xmlhttp.setRequestHeader("Referrer", "no-referrer-when-downgrade");
+	xmlhttp.send(JSON.stringify("{\"LED\":\""+(d==true?1:0)+"\"}"));
+}
+
+function loadDoc() {
+  var date = new Date(); 
+  var monthnya = (date.getMonth()+1);
+  if(monthnya <10) monthnya = "0"+monthnya;
+  var currdate =  date.getFullYear()+'-'+monthnya + '-'+ date.getDate();
+  const xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+		const dd = JSON.parse(this.responseText);
+		const lst = dd[dd.length - 1].LED;
+		if(lst==0){
+			document.getElementById('swt').checked = false;
+			document.getElementById('lmp_status').innerHTML = 'LAMP <span style="color:red">OFF</span>';
+		}else{
+			document.getElementById('swt').checked = true;
+			document.getElementById('lmp_status').innerHTML = 'LAMP <span style="color:green">ON</span>';
+		}
+    }
+  xhttp.open("GET", "https://api-data.telkomiot.id/api/v2.0/"+APPLICATION_ID+"/"+DEVICE_ID+"/history?starttime="+currdate+"&endtime"+currdate, true);
+  xhttp.send();
+}
+loadDoc();
+
+
+</script>
